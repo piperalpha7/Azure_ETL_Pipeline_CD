@@ -13,9 +13,9 @@ Above is the basic diagram of the project. There are however many changes I have
 
     └── ADLS GEN2(Storage Account- DataLake)/
         └── Sales(Container)/
-            ├── Landing(Folder)
-            ├── Staging(Folder)
-            └── Discarded(Folder)
+            ├── Landing(Folder)\
+            ├── Staging(Folder)\
+            └── Discarded(Folder)\
 
 2. Created an Azure Databricks Workspace
   
