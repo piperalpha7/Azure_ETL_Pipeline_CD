@@ -34,3 +34,120 @@ Above is the basic diagram of the project. There are however many changes I have
         extra_configs=extra_configs
     )
 ~~~
+where 'sdsdffreeee' is the secret key required to access ADLS Gen2. But this is not a good practice. Hence its better to store this secret key in a 'Key Vault' which guards all these secret keys well. The Code could then be modified as 
+
+~~~
+    extra_configs = {
+    'fs.azure.account.key.cdstorageaccount1.blob.core.windows.net': dbutils.secrets.get('cd-secrets-databricks-scope', 'storagekey')}
+
+    dbutils.fs.mount(
+        source='wasbs://sales@cdstorageaccount1.blob.core.windows.net',
+        mount_point='/mnt/sales',
+        extra_configs=extra_configs
+    )
+~~~
+where 'cd-secrets-databricks-scope' is the name of the 'Key Vault' and 'storagekey' is the name of the variable our 'secret key' is stored under.
+
+So the portion of the pipeline where Databricks accesses key vault looks like:
+
+![image](https://github.com/user-attachments/assets/5be9a5d0-1b4d-491e-b203-408bcd2a335d)
+
+
+4. Create an Azure SQL table which contains the vaid order status which are
+
+ON_HOLD
+PAYMENT_REVIEW
+PROCESSING
+CLOSED
+SUSPECTED_FRAUD
+COMPLETE
+PENDING
+CANCELLED
+PENDING_PAYMENT
+
+This table will be referenced to check if all the data in the 'Landing' folder have one of the above 'Order' status. If they do then those records will be transferred to the 'Staging' folder else they will be transferred to the 'Discarded' folder. The Azure SQL Database and tables are easily accessible through 'Azure Data Studio'.
+
+
+## Iteration 2
+
+Now Inside the Databricks Notebook, we need to follow a certain flow:
+
+1. Creating a Mount Point(If Not Created) -  We mount the ADLS Gen2 Container such that it can be accessed through Databricks through the secret scope.
+
+
+~~~
+   # Check if storage account is mounted
+mounted = False
+for x in dbutils.fs.mounts():
+    if x.mountPoint == '/mnt/sales':
+        mounted = True
+        break
+    else:
+        mounted = False
+
+        if mounted == False:
+    extra_configs = {
+    'fs.azure.account.key.cdstorageaccount1.blob.core.windows.net': dbutils.secrets.get('cd-secrets-databricks-scope', 'storagekey')}
+
+    dbutils.fs.mount(
+        source='wasbs://sales@cdstorageaccount1.blob.core.windows.net',
+        mount_point='/mnt/sales',
+        extra_configs=extra_configs
+    )
+~~~
+
+2. Load the orders.csv into a dataframe
+
+   ~~~
+   orders_df = spark.read.csv(f'dbfs:/mnt/sales/Landing/orders.csv',inferSchema=True,header=True)
+   ~~~
+
+
+3. Check for 1st Data Validation viz. check if order_ids are repeated. If order_ids are repeated , it means data is faulty , hence entire data will be moved to discarded folder else we can go to the second validation. While exiting we flag a variable called 'errorMsg' which will suggest wherther order_id is repeated or not.
+
+~~~
+errorflg = False
+orders_count = orders_df.count()
+dist_orders = orders_df.select('order_id').distinct().count()
+if orders_count!=dist_orders:
+    errorflg = True
+if errorflg == True:
+    dbutils.fs.mv(f'/mnt/sales/Landing/{filename}','/mnt/sales/Discarded')
+    dbutils.notebook.exit('{"errorflg":"True","errorMsg":"Orderid is repeated"}')
+~~~
+
+4. Second Data Validation...Check if all order_statuses are valid while referencing the Azure SQL Table which has all the valid order statuses.
+
+~~~
+jdbcHostname = "cd-server-24.database.windows.net"
+jdbcPort = 1433
+jdbcDatabase = "cd_database_24"
+jdbcTable = "dbo.valid_order_status"
+jdbcUsername = "cdadmin"
+jdbcPassword = dbutils.secrets.get('cd-secrets-databricks-scope', 'sql-passw')
+jdbcDriver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+
+jdbcUrl = f"jdbc:sqlserver://{jdbcHostname}:{jdbcPort};database={jdbcDatabase};user ={jdbcUsername};password={jdbcPassword}"
+
+
+df_status = spark.read.format("jdbc").option("url",jdbcUrl).option("dbtable",jdbcTable).load()
+
+values_to_check = [df_status.collect()[i][0] for i in range (0,df_status.count())]
+filtered_df = orders_df.filter(~orders_df.order_status.isin(values_to_check)).select('order_status')
+
+if filtered_df.count()>0:
+    errorflg = True
+
+if errorflg == True:
+    dbutils.fs.mv(f'/mnt/sales/Landing/{filename}','/mnt/sales/Discarded')
+    dbutils.notebook.exit('{"errorflg":"True","errorMsg":"Invalid order status found"}')
+else:
+    dbutils.fs.mv(f'/mnt/sales/Landing/{filename}','/mnt/sales/Staging')
+    #dbutils.notebook.exit('{"errorflg":"False","errorMsg":"All Good"}')
+
+Once both these checks are successful, notebook will be exited and 'errorMsg' variable will show 'All Good' 
+
+
+## Iteration 3
+
+   
