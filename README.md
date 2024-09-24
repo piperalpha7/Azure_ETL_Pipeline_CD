@@ -12,8 +12,8 @@ Above is the basic diagram of the project. There are however many changes I have
    The structure is as follows:
 
     └── ADLS GEN2(Storage Account- DataLake)/\
-        └── Sales(Container)/\
-        &nbsp;├── Landing(Folder)\
+     &nbsp; &nbsp;└── Sales(Container)/\
+     &nbsp; &nbsp;&nbsp;&nbsp;├── Landing(Folder)\
             ├── Staging(Folder)\
             └── Discarded(Folder)\
 
