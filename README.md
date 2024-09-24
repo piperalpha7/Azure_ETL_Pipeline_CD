@@ -145,9 +145,40 @@ else:
     dbutils.fs.mv(f'/mnt/sales/Landing/{filename}','/mnt/sales/Staging')
     #dbutils.notebook.exit('{"errorflg":"False","errorMsg":"All Good"}')
 
+~~~
+
 Once both these checks are successful, notebook will be exited and 'errorMsg' variable will show 'All Good' 
 
 
 ## Iteration 3
+
+So far we have self-triggered or self-run our pipeline, we therefore can schedule a trigger to automate the pipeline. Also Notice in 'Iteration 2(point4), we are passing or hardcoding the filename(orders.csv). Since we plan to deploy a 'Schedule Trigger', we need to note that 'trigger' is a first point of contact and has the capability to capture the filenames of the newly added files in the Storage account and pass it to the pipeline. We will then no loger need to hardcode the name of the file. We therefore declare a parameter called 'filename' and give it the value '@triggerBody().filename'. We then access this value in the databricks notebook with the help of the following code:-
+
+~~~
+filename = dbutils.widgets.get('filename')
+Fnamewithoutext = filename.split('.')[0]
+~~~
+
+So currently our pipeline looks like:
+
+![AZURE1](https://github.com/user-attachments/assets/c9d74496-f493-434a-bc1b-9eb078fb6961)
+
+
+## Iteration 4
+
+1. We have a file called 'order_items.json' in AWS S3. This needs to be brought to the Azure Databricks notebook in our Pipeline. We again need Linked Services to access the S3 bucket. We also would need IAM permissions in the AWS account. The secret key of the AWS bucket needs to be stored in the Key vault as well.
+
+2.  We have a 'customers' table in Azure SQL Database . We just need Linked services to connect.
+
+   Once we have orders,order_items and customers data inside the Databricks Notebook. We will Join and aggregate further Results and store it in an Azure SQL Database. 
+
+   The final Pipeline would now Look like:
+
+
+![Azure2](https://github.com/user-attachments/assets/b8dc4521-acea-4e29-a319-4db599784834)
+
+
+
+Hence by just initiating a Storage Trigger the entire pipeline is activated as shown in the Diagram above
 
    
