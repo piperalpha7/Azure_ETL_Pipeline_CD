@@ -15,7 +15,7 @@ Above is the basic diagram of the project. There are however many changes I have
      &nbsp; &nbsp;└── Sales(Container)/\
      &nbsp; &nbsp;&nbsp;&nbsp;├── Landing(Folder)\
      &nbsp; &nbsp;&nbsp;&nbsp;├── Staging(Folder)\
-     &nbsp; &nbsp;&nbsp;&nbsp;└── Discarded(Folder)\
+     &nbsp; &nbsp;&nbsp;&nbsp;└── Discarded(Folder)
 
 2. Created an Azure Databricks Workspace
   
