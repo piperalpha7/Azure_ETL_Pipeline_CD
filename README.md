@@ -13,7 +13,7 @@ Above is the basic diagram of the project. There are however many changes I have
 
     └── ADLS GEN2(Storage Account- DataLake)/\
         └── Sales(Container)/\
-        emsp├── Landing(Folder)\
+        &emsp├── Landing(Folder)\
             ├── Staging(Folder)\
             └── Discarded(Folder)\
 
