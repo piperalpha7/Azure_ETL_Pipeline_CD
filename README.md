@@ -11,11 +11,11 @@ Above is the basic diagram of the project. There are however many changes I have
 1. Create a storage account(ADLS Gen2)
    The structure is as follows:
 
-    └── ADLS GEN2(Storage Account- DataLake)/\
+    └── ADLS GEN2(Storage Account- DataLake)/
      &nbsp; &nbsp;└── Sales(Container)/\
      &nbsp; &nbsp;&nbsp;&nbsp;├── Landing(Folder)\
-            ├── Staging(Folder)\
-            └── Discarded(Folder)\
+     &nbsp; &nbsp;&nbsp;&nbsp;├── Staging(Folder)\
+     &nbsp; &nbsp;&nbsp;&nbsp;└── Discarded(Folder)\
 
 2. Created an Azure Databricks Workspace
   
